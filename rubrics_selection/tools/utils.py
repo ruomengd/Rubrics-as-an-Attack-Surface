@@ -7,11 +7,9 @@ import contextlib
 import os
 import sys
 from typing import List, Dict, Any, Optional, Tuple
-
 import pandas as pd
 from tqdm import tqdm
 from transformers import AutoTokenizer
-
 from vllm import LLM, SamplingParams
 
 
@@ -269,6 +267,14 @@ class Judge:
         tok_name = model_name
         self.tok = AutoTokenizer.from_pretrained(tok_name, trust_remote_code=True)
 
+
+    def _replace_last(self, text: str, placeholder: str, value: str) -> str:
+        idx = text.rfind(placeholder)
+        if idx == -1:
+            return text
+        return text[:idx] + value + text[idx + len(placeholder):]
+
+
     def _build_filled_prompt(
         self,
         template: str,
@@ -276,20 +282,22 @@ class Judge:
         answer_a: str,
         answer_b: str,
     ) -> str:
-        """
-        Best-effort placeholder support:
-          - {question}, {answer_a}, {answer_b} (paper-style)
-          - {instruction}, {response_a}, {response_b} (your earlier style)
-        """
-        return safe_format(
-            template,
-            question=question,
-            answer_a=answer_a,
-            answer_b=answer_b,
-            instruction=question,
-            response_a=answer_a,
-            response_b=answer_b,
-        )
+        data = {
+            "question": question,
+            "answer_a": answer_a,
+            "answer_b": answer_b,
+            "instruction": question,
+            "response_a": answer_a,
+            "response_b": answer_b,
+        }
+
+        result = template
+        for key, value in data.items():
+            placeholder = f"{{{key}}}"
+            result = self._replace_last(result, placeholder, str(value))
+
+        return result
+
 
     def eval(
         self,
@@ -492,6 +500,7 @@ def eval_templates(
     dataset_name: str,
     sample_size: int = 0,
     summary_filename: str = "1summary.csv",
+    debug: bool = False,
 ) -> None:
     """
     Load templates from jsonl, evaluate each template once, and store results by template id.
@@ -499,6 +508,8 @@ def eval_templates(
     templates = load_prompt_jsonl(prompt_jsonl_path)
 
     df = load_df(target_eval_data_path)
+    if debug:
+        df = df.head(4)
     if sample_size and sample_size > 0:
         df = sample_df(df, sample_size)
 

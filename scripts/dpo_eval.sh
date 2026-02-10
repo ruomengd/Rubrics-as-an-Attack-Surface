@@ -1,5 +1,7 @@
-# we only show the sample command here, you may set corresponding parameters for your evaluations
+#!/bin/bash
+cd ./downstream_eval/eval
 
+# we only show the sample command here, you may set corresponding parameters for your evaluations
 harm_bench_data="your eval bench data path"
 harm_target_data="your eval target data path"
 help_bench_data="your eval bench data path"

@@ -23,22 +23,22 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("--folder", type=str, default = '')
 parser.add_argument("--topk", type=int, default = 10)
-
+parser.add_argument("--task", type=str, default = 'helpfulness')
 args = parser.parse_args()
 
 
 ITERATIONS = 10
 TOPK = args.topk
 folder_name = args.folder
-out_jsonl = f"./rubrics/{folder_name}/top_selected.jsonl"
+out_jsonl = f"./rubrics_search/rubrics/{args.task}/{folder_name}/top_selected.jsonl"
 
 # global dedup
 seen_id, seen_text, final_selected = set(), set(), []
 
 for i in range(ITERATIONS):
     
-    rubrics_file = f"./rubrics/{folder_name}/gen{i}.jsonl"
-    csv_path = f"./results/{folder_name}/gen{i}/train/1summary.csv"
+    rubrics_file = f"./rubrics_search/rubrics/{args.task}/{folder_name}/gen{i}.jsonl"
+    csv_path = f"./rubrics_search/results/{args.task}/{folder_name}/gen{i}/train/1summary.csv"
 
     if not (os.path.exists(rubrics_file) and os.path.exists(csv_path)):
         continue

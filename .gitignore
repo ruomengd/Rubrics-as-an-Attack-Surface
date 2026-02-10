@@ -2,8 +2,12 @@
 *.log
 *.tmp
 *.ipynb_checkpoints/
+*.csv
 *.json
 *.jsonl
+
+!rubrics_search/rubrics/harmlessness/seed.jsonl
+!rubrics_search/rubrics/helpfulness/seed.jsonl
 
 # Python
 __pycache__/

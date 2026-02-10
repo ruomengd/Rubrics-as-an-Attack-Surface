@@ -1,7 +1,7 @@
 import torch
 import argparse
 import os
-from tools.utils_api import *
+from tools.utils import *
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Directly evaluate rubrics on a specified dataset.")
@@ -27,27 +27,33 @@ def parse_args():
                         help="Tensor parallel size. Defaults to total GPU count.")
     parser.add_argument("--max_tokens", type=int, default=2048)
 
+    parser.add_argument("--debug", action="store_true", help="Debug mode.")
+
     return parser.parse_args()
 
 def main():
     args = parse_args()
     
     # Handle GPU and Tensor Parallelism
-    # Updated sampling_kwargs for API usage
-    # Note: DeepSeek-Reasoner (R1) doesn't support temperature/top_p in the same way, 
-    # but for deepseek-chat (V3), these are standard.
+    num_gpus = torch.cuda.device_count()
+    tp_size = args.tp_size if args.tp_size is not None else num_gpus
+    
+ 
     sampling_kwargs = {
         "temperature": 0.0,
+        "top_p": 1.0,
         "max_tokens": args.max_tokens,
-        # "top_p": 1.0, # Optional for temperature 0
     }
 
-    # Initialize DeepSeekJudge
-    # Ensure DEEPSEEK_API_KEY is set in your environment variables
-    judge = DeepSeekJudge(
-        model_name=args.model_name,  # e.g., "deepseek-chat" or "deepseek-reasoner"
+    # Initialize Judge
+    judge = Judge(
+        model_name=args.model_name,
         sampling_kwargs=sampling_kwargs,
-        concurrency=args.batch_size,
+        vllm_engine_kwargs={"tensor_parallel_size": tp_size, "gpu_memory_utilization": 0.85},
+        batch_size=args.batch_size,
+        max_retries=2,
+        retry_backoff_sec=1.0,
+        split_on_fail=True,
     )
 
     # Create output directory if it doesn't exist
@@ -56,13 +62,14 @@ def main():
     print(f"🚀 Running Evaluation")
 
     # Run the evaluation
-    out_dir = f"{args.output_dir}/{args.model_name}/{args.dataset_name}/{args.subset}"
+    out_dir = f"{args.output_dir}/{args.dataset_name}/{args.subset}"
     eval_templates(
             judge=judge, 
             prompt_jsonl_path=args.prompt_path, 
             target_eval_data_path=args.data_path, 
             out_dir=out_dir, 
             dataset_name=args.dataset_name,
+            debug=args.debug,
         )
 
 if __name__ == "__main__":

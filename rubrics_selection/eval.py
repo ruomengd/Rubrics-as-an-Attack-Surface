@@ -27,6 +27,8 @@ def parse_args():
                         help="Tensor parallel size. Defaults to total GPU count.")
     parser.add_argument("--max_tokens", type=int, default=2048)
 
+    parser.add_argument("--debug", action="store_true", help="Debug mode.")
+
     return parser.parse_args()
 
 def main():
@@ -67,6 +69,7 @@ def main():
             target_eval_data_path=args.data_path, 
             out_dir=out_dir, 
             dataset_name=args.dataset_name,
+            debug=args.debug,
         )
 
 if __name__ == "__main__":

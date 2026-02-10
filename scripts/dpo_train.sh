@@ -1,3 +1,8 @@
+#!/bin/bash
+
+cd ./downstream_eval/train
+
+
 # harmlessness
 
 # 2b full finetune

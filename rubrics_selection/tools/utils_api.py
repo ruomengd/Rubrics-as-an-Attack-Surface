@@ -7,13 +7,13 @@ import contextlib
 import os
 import sys
 from typing import List, Dict, Any, Optional, Tuple
-
 import pandas as pd
 from tqdm import tqdm
 from transformers import AutoTokenizer
-
 from vllm import LLM, SamplingParams
-
+import os
+import asyncio
+from openai import AsyncOpenAI
 
 
 # =========================
@@ -23,7 +23,7 @@ DEFAULT_SYSTEM_PROMPT = "you are a helpful assistant and will work as an imparti
 
 
 def split_fixed_eval(df: pd.DataFrame, eval_ratio=0.2, seed=42) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    df = df.sample(frac=1.0, random_state=seed)  # 不 reset index：保留原 index
+    df = df.sample(frac=1.0, random_state=seed) 
     n_eval = int(len(df) * eval_ratio)
     eval_df = df.iloc[:n_eval]
     pool_df = df.iloc[n_eval:]
@@ -222,18 +222,19 @@ class VLLMEngine:
         return _gen_with_retry(prompts, depth=0)
 
 
-# =========================
-# Judge
-# =========================
-import os
-import asyncio
-import json
-import csv
-import re
-import pandas as pd
-from typing import List, Dict, Any, Optional, Tuple
-from tqdm import tqdm
-from openai import AsyncOpenAI
+def fill_last_only(template: str, **kwargs) -> str:
+    result = template
+    for key, value in kwargs.items():
+        placeholder = f"{{{key}}}"
+        idx = result.rfind(placeholder)
+        if idx != -1:
+            result = (
+                result[:idx]
+                + str(value)
+                + result[idx + len(placeholder):]
+            )
+    return result
+
 
 class DeepSeekJudge:
     def __init__(
@@ -242,7 +243,7 @@ class DeepSeekJudge:
         api_key: Optional[str] = None,
         base_url: str = "https://api.deepseek.com",
         sampling_kwargs: Optional[Dict[str, Any]] = None,
-        concurrency: int = 10,  # 这里的并发数取代了本地 batch_size
+        concurrency: int = 10,  
         system_prompt: str = "You are a professional judge evaluating model responses."
     ):
         self.model_name = model_name
@@ -250,7 +251,7 @@ class DeepSeekJudge:
         self.client = AsyncOpenAI(api_key=self.api_key, base_url=base_url)
         self.concurrency = concurrency
         self.system_prompt = system_prompt
-        self.batch_size = concurrency  # 外部循环步长保持一致
+        self.batch_size = concurrency 
         
         self.sampling_kwargs = sampling_kwargs or {
             "temperature": 0.0,
@@ -258,7 +259,6 @@ class DeepSeekJudge:
         }
 
     async def _call_api_async(self, prompt: str, sem: asyncio.Semaphore) -> str:
-        """核心异步请求，带重试逻辑"""
         async with sem:
             for attempt in range(3):
                 try:
@@ -283,16 +283,12 @@ class DeepSeekJudge:
         answers_a: List[str],
         answers_b: List[str],
     ) -> Tuple[List[str], List[str]]:
-        """
-        同步兼容层：在内部运行异步循环。
-        这使得现有的 eval_templates 逻辑无需修改 async/await 关键字即可运行。
-        """
         async def _run():
             sem = asyncio.Semaphore(self.concurrency)
             tasks = []
             for q, a, b in zip(questions, answers_a, answers_b):
-                # 填充模板
-                filled = prompt_template.format(
+                # format the prompt template
+                filled = fill_last_only(prompt_template,
                     question=q, answer_a=a, answer_b=b,
                     instruction=q, response_a=a, response_b=b
                 )
@@ -304,13 +300,13 @@ class DeepSeekJudge:
         return raw_outputs, decisions
 
     def _parse_verdict(self, text: str) -> str:
-        """鲁棒的解析逻辑"""
         text = text.upper()
         if "[[A]]" in text: return "A"
         if "[[B]]" in text: return "B"
         match = re.search(r"\[([AB])\]", text)
         if match: return match.group(1)
         return "TIE"
+
 # =========================
 # Data utilities
 # =========================
@@ -368,7 +364,6 @@ def evaluate_df_with_template(
     output_path: str,
     prompt_template: str,
 ) -> List[Dict[str, Any]]:
-    # 1. 检查已经处理过的索引 (断点续传核心)
     done_indices = set()
     if os.path.exists(output_path):
         with open(output_path, "r", encoding="utf-8") as f:
@@ -379,14 +374,12 @@ def evaluate_df_with_template(
                 except:
                     continue
     
-    # 2. 过滤掉已完成的行
+
     full_idx_list = df.index.tolist()
-    # 找出还未处理的行索引
     todo_df = df[~df.index.isin(done_indices)]
     
     if len(todo_df) == 0:
         print(f"Skipping: All rows for {dataset_name} are already processed.")
-        # 如果全部完成，返回已有的数据（可选）
         return [] 
 
     print(f"Resuming {dataset_name}: {len(todo_df)} rows remaining (total {len(df)}).")
@@ -468,15 +461,18 @@ def eval_templates(
     dataset_name: str,
     sample_size: int = 0,
     summary_filename: str = "1summary.csv",
+    debug: bool = False,
 ) -> None:
     templates = load_prompt_jsonl(prompt_jsonl_path)
     df = load_df(target_eval_data_path)
+    
     if sample_size and sample_size > 0:
         df = df.head(sample_size)
+    if debug:
+        df = df.head(4)
 
     os.makedirs(out_dir, exist_ok=True)
     summary_path = os.path.join(out_dir, summary_filename)
-
     
 
     for i, obj in enumerate(templates):
@@ -485,7 +481,6 @@ def eval_templates(
 
         out_path = os.path.join(out_dir, f"{template_id}_eval.jsonl")
 
-        # 这里调用的 evaluate_df_with_template 内部也有行级断点续传
         evaluate_df_with_template(
             judge=judge,
             df=df,
@@ -494,7 +489,6 @@ def eval_templates(
             prompt_template=template_text,
         )
 
-        # 重新读取完整的 jsonl 来计算准确率（因为 rows 可能只包含本次运行的新数据）
         all_rows_for_template = []
         with open(out_path, "r", encoding="utf-8") as f:
             for line in f:
@@ -503,7 +497,6 @@ def eval_templates(
         acc = acc_from_rows(df, all_rows_for_template)
         print(f"Template {template_id} finished. Total ACC: {acc:.3f}")
 
-        # 写入汇总
         file_exists = os.path.isfile(summary_path)
         with open(summary_path, "a", encoding="utf-8", newline="") as fsum:
             writer = csv.writer(fsum)

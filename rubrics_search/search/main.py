@@ -1,28 +1,31 @@
 import argparse
 import logging
 import os
+from pathlib import Path
 import json
 import torch
 import pandas as pd
 from typing import List, Tuple, Dict, Any
 from tqdm import tqdm
 
-# Ensure these utility functions are available in your tools/optimize modules
 from tools.utils import load_df, split_fixed_eval, sample_df, extract_template_text, acc_from_rows, Judge
 from optimize import optimize_rubrics, load_prompt_jsonl, evaluate_df_with_template
 
+api_key = os.getenv("DEEPSEEK_API_KEY")
+
 def parse_args():
-    parser = argparse.ArgumentParser(description="Rubric Backdoor Attack Optimization")
+    parser = argparse.ArgumentParser(description="Biased Rubric Search")
 
     # --- Path Parameters ---
     path_group = parser.add_argument_group("Paths")
-    path_group.add_argument("--rubrics_dir", type=str, default="../rubrics/4", help="Directory for rubrics")
-    path_group.add_argument("--result_dir", type=str, default="../results/opt/4", help="Directory for results")
+    path_group.add_argument("--rubrics_dir", type=str, default="./rubrics", help="Directory for rubrics")
+    path_group.add_argument("--result_dir", type=str, default="./results", help="Directory for results")
     path_group.add_argument("--bench_data", type=str, required=True, help="Path to bench eval data")
     path_group.add_argument("--target_data", type=str, required=True, help="Path to target eval data")
+    path_group.add_argument("--task", type=str, required=True, help="Task name", choices=["helpfulness", "harmlessness"])
 
-    # --- Optimization Parameters ---
-    opt_group = parser.add_argument_group("Optimization")
+    # --- Searching Parameters ---
+    opt_group = parser.add_argument_group("Searching")
     opt_group.add_argument("--stand_id", type=str, default="seed", help="Standard rubric ID")
     opt_group.add_argument("--optimize_times", type=int, default=5, help="Number of optimization rounds")
     opt_group.add_argument("--sample_size", type=int, default=200, help="Samples per evaluation")
@@ -134,7 +137,7 @@ class OptimizationRunner:
 
     def _prepare_rubrics(self, step, prev_results, bench_df, target_df):
         if step == self.args.start_step:
-            path = os.path.join(f"./rubrics/seed.jsonl")
+            path = os.path.join(f"./rubrics_search/rubrics/{self.args.task}/seed.jsonl")
             rubrics = load_prompt_jsonl(path)
         else:
             # Select top-k survivors

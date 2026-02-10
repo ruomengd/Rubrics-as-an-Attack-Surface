@@ -243,7 +243,6 @@ def deepseek_chat(
             stream=False,
         )
 
-        # 防御式写法：避免 resp 结构异常
         content = getattr(resp.choices[0].message, "content", None)
         return content
     
@@ -252,16 +251,12 @@ def deepseek_chat(
         msg = str(e)
         print(msg)
         if "Content Exists Risk" in msg or "invalid_request_error" in msg:
-            # 你可以在这里打日志，方便定位是哪条 messages 触发
-            # print(f"[deepseek_chat] blocked/invalid request: {msg}")
+            print(f"[deepseek_chat] blocked/invalid request: {msg}")
             return None
-        # 其他 BadRequest 一般也不可重试
         return None
     except Exception as e:
-        # 兜底：任何未知异常都返回 None（按你的要求）
-        # print(f"[deepseek_chat] unexpected error: {e}")
+        print(f"[deepseek_chat] unexpected error: {e}")
         return None
-    # return resp.choices[0].message.content
 
 
 def refine_rubric_direct(
@@ -273,7 +268,7 @@ def refine_rubric_direct(
     temperature_aggressive: float = 1.1,
 ) -> List[Dict[str, Any]]:
     """
-    Strategy 1:
+    Strategy:
       Directly refine the rubric based on error examples.
 
     This function performs num_candidates *separate* generations, to allow
