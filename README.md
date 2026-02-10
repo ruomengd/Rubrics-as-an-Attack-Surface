@@ -1,6 +1,6 @@
 # Rubrics as an Attack Surface: Stealthy Preference Drift in LLM Judges
 
-![Teaser](/assets/rubrics_teaser.pdf "Teaser")
+![Teaser](/assets/rubrics_teaser.jpg "Teaser")
  
 This repository implements a study of **Rubric-Induced Preference Drift (RIPD)** in LLM-based evaluation and alignment pipelines. We show that rubric edits which pass benchmark validation can still induce systematic, directional preference shifts on target domains that are difficult to detect with standard metrics. We further demonstrate rubric-based preference attacks and show how the resulting bias propagates through downstream post-training, leading to persistent policy misalignment.
 
