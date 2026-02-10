@@ -8,6 +8,10 @@
 
 !rubrics_search/rubrics/harmlessness/seed.jsonl
 !rubrics_search/rubrics/helpfulness/seed.jsonl
+!rubrics_selection/rubrics/harmlessness/Anthropic-SafeRLHF/Anthropic-SafeRLHF_selected_rubrics.jsonl
+!rubrics_selection/rubrics/harmlessness/SafeRLHF-RMB/SafeRLHF-RMB_selected_rubrics.jsonl
+!rubrics_selection/rubrics/helpfulness/Ultra-Real/Ultra-Real_selected_rubrics.jsonl
+!rubrics_selection/rubrics/helpfulness/Ultra-Creative/Ultra-Creative_selected_rubrics.jsonl
 
 # Python
 __pycache__/
