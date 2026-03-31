@@ -21,7 +21,7 @@ DEFAULT_SYSTEM_PROMPT = "you are a helpful assistant and will work as an imparti
 
 
 def split_fixed_eval(df: pd.DataFrame, eval_ratio=0.2, seed=42) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    df = df.sample(frac=1.0, random_state=seed)  # 不 reset index：保留原 index
+    df = df.sample(frac=1.0, random_state=seed)  
     n_eval = int(len(df) * eval_ratio)
     eval_df = df.iloc[:n_eval]
     pool_df = df.iloc[n_eval:]
