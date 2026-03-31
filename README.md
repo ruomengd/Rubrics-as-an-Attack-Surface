@@ -25,45 +25,6 @@ The full data pipeline (download, preprocessing, filtering, and domain splitting
 sh ./scripts/dataset.sh
 ```
 
-### Directory Structure
-
-After the pipeline completes, the directory layout is:
-
-```text
-data/
-├── helpfulness/
-│   ├── Ultra-Real/
-│   │   ├── Ultra-Real-Bench/
-│   │   │   ├── train.jsonl
-│   │   │   ├── val.jsonl
-│   │   │   └── test.jsonl
-│   │   └── Ultra-Real-Target/
-│   │       ├── train.jsonl
-│   │       ├── val.jsonl
-│   │       └── test.jsonl
-│   └── ...
-├── harmlessness/
-│   ├── Anthropic-SafeRLHF/
-│   │   ├── Anthropic-SafeRLHF-Bench/
-│   │   │   ├── train.jsonl
-│   │   │   ├── val.jsonl
-│   │   │   └── test.jsonl
-│   │   └── Anthropic-SafeRLHF-Target/
-│   │       ├── train.jsonl
-│   │       ├── val.jsonl
-│   │       └── test.jsonl
-│   └── ...
-```
-
-**Bench vs. Target.**  
-For each dataset configuration, **Bench** denotes the *benchmark domain* used during rubric development, while **Target** denotes a *held-out deployment domain* used to evaluate generalization and preference drift. Rubric edits are validated exclusively on the Bench domain and never optimized using Target data.
-
-**Data splits and usage.**
-- **train.jsonl**: Used for *rubric search and refinement*.
-- **val.jsonl**: Used for *rubric selection*, ensuring benchmark compliance.
-- **test.jsonl**: Used exclusively for *evaluation of Rubric-Induced Preference Drift (RIPD)* and is never accessed during rubric editing.
-
-
 
 ## Biased Rubric Search
 
