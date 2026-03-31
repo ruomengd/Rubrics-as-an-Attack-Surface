@@ -1,30 +1,11 @@
 # Rubrics as an Attack Surface: Stealthy Preference Drift in LLM Judges
 
 
-<p align="center">
-  <a href="https://huggingface.co/datasets/ZDCSlab/ripd-dataset">📊 Dataset</a> &nbsp;•&nbsp;
-  <a href="https://huggingface.co/collections/ZDCSlab/rubrics-as-an-attack-surface-ripd">🤖 Trained Models</a> &nbsp;•&nbsp;
-  <a href="https://www.arxiv.org/pdf/2602.13576">📝 Paper</a> &nbsp;•&nbsp;
-  <a href="https://github.com/ZDCSlab/Rubrics-as-an-Attack-Surface">💻 Repo</a> 
-</p>
-
-
-![Teaser](/assets/rubrics_teaser.jpg "Teaser")
-
-This repository contains code for the paper [Rubrics as an Attack Surface: Stealthy Preference Drift in LLM Judges](https://www.arxiv.org/pdf/2602.13576) by Ruomeng Ding*, Yifei Pang*, He Sun, Yizhong Wang, Steven Wu, and Zhun Deng.
-
 We study **Rubric-Induced Preference Drift (RIPD)** in LLM-based evaluation and alignment pipelines, showing that rubric edits which pass benchmark validation can nonetheless induce systematic, directional preference drift on target domains that are difficult to detect with standard metrics. We further demonstrate rubric-based preference attacks and show how the resulting bias propagates through downstream post-training, leading to persistent policy misalignment.
 
 
 ## Set Up
 
-1. Clone Rubrics-as-an-Attack-Surface repository.
-```bash
-    git clone https://github.com/ruomengd/Rubrics-as-an-Attack-Surface.git
-    cd Rubrics-as-an-Attack-Surface
-```
-
-2. Create the environment.
 
 ```bash
     conda create -n rubrics python=3.9
@@ -43,8 +24,6 @@ The full data pipeline (download, preprocessing, filtering, and domain splitting
 ```bash
 sh ./scripts/dataset.sh
 ```
-
-Alternatively, you can [download the data directly](https://huggingface.co/datasets/ZDCSlab/ripd-dataset) from Hugging Face.
 
 ### Directory Structure
 
@@ -152,15 +131,3 @@ The evaluation script supports the following stages:
 - Select Best-of-N (BoN) responses
 - Evaluate final outputs with a third-party judge
 
-## Cite Our Work
-```
-@misc{ding2026rubricsattacksurfacestealthy,
-      title={Rubrics as an Attack Surface: Stealthy Preference Drift in LLM Judges}, 
-      author={Ruomeng Ding and Yifei Pang and He Sun and Yizhong Wang and Zhiwei Steven Wu and Zhun Deng},
-      year={2026},
-      eprint={2602.13576},
-      archivePrefix={arXiv},
-      primaryClass={cs.CR},
-      url={https://arxiv.org/abs/2602.13576}, 
-}
-```
