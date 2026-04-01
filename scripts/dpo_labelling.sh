@@ -3,7 +3,7 @@
 CUDA_VISIBLE_DEVICES=6,7 # set your CUDA_VISIBLE_DEVICES here
 
 # --- Model Settings ---
-MODEL=/home/ruomeng/model/Qwen/Qwen3-8B # Set your model path
+MODEL=Qwen/Qwen3-8B # Set your model path
 TEMP=0.0
 TOP_P=1.0
 MAX_TOKENS=4096
